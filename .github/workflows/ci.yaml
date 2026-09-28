@@ -17,7 +17,7 @@ jobs:
 
       - name: Instalar Poetry y dependencias
         run: |
-          pip install poetry==2.0.0
+          pip install poetry
           poetry config virtualenvs.create false
           poetry install
 

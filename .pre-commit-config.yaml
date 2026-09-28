@@ -19,3 +19,4 @@ repos:
       - id: mypy
         args: ["--ignore-missing-imports"]
         additional_dependencies: [pydantic, sqlalchemy]
+        exclude: ^alembic/

@@ -1,0 +1,37 @@
+name: CI/CD Proyecto con Arquitectura Hexagonal
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main"]
+
+jobs:
+  qa_and_security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar Poetry y dependencias
+        run: |
+          pip install poetry==2.0.0
+          poetry config virtualenvs.create false
+          poetry install
+
+      - name: Auditoría de Seguridad (Dependencias)
+        run: pip-audit
+
+      - name: Linter y Formato (Ruff)
+        run: ruff check .
+
+      - name: Análisis de Tipos Estáticos (Mypy)
+        run: mypy app/
+
+      - name: Pruebas Unitarias, de Contrato y Cobertura (Pytest)
+        run: pytest -v --cov=app tests/unit tests/contract
+
+      - name: Pruebas de Integración (E2E)
+        run: pytest -v tests/e2e

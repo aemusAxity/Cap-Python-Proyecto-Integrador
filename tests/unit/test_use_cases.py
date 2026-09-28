@@ -104,3 +104,66 @@ def test_create_new_order_with_invalid_email() -> None:
         use_case.create_new_order("test.com", items_data)
 
     mock_repo.create_order.assert_not_called()
+
+
+def test_update_order_status_success_with_mock() -> None:
+    mock_repo = MagicMock(spec=OrderRepository)
+    item = OrderItem(product_name="Monitor", price=300.0, quantity=1)
+
+    orden_actualizada = Order(
+        id=7, customer_email="update@test.com", status="PAGADO", items=[item]
+    )
+    mock_repo.update_order_status.return_value = orden_actualizada
+
+    use_case = OrderUseCase(repository=mock_repo)
+
+    resultado = use_case.update_order_status(7, "PAGADO")
+
+    mock_repo.update_order_status.assert_called_once_with(7, "PAGADO")
+    assert resultado.status == "PAGADO"
+    assert resultado.id == 7
+
+
+def test_update_order_status_fails_if_invalid_status() -> None:
+    mock_repo = MagicMock(spec=OrderRepository)
+    use_case = OrderUseCase(repository=mock_repo)
+
+    with pytest.raises(ValueError, match="Estado 'ESTADO_INVENTADO' no es válido"):
+        use_case.update_order_status(7, "ESTADO_INVENTADO")
+
+    mock_repo.update_order_status.assert_not_called()
+
+
+def test_update_order_status_fails_if_not_found() -> None:
+    mock_repo = MagicMock(spec=OrderRepository)
+    mock_repo.update_order_status.return_value = None
+
+    use_case = OrderUseCase(repository=mock_repo)
+
+    with pytest.raises(
+        ValueError, match="Orden con ID 99 no encontrada para actualizar"
+    ):
+        use_case.update_order_status(99, "ENVIADO")
+
+
+def test_delete_order_success_with_mock() -> None:
+    mock_repo = MagicMock(spec=OrderRepository)
+    mock_repo.delete_order.return_value = True
+
+    use_case = OrderUseCase(repository=mock_repo)
+
+    use_case.delete_order(10)
+
+    mock_repo.delete_order.assert_called_once_with(10)
+
+
+def test_delete_order_fails_if_not_found() -> None:
+    mock_repo = MagicMock(spec=OrderRepository)
+    mock_repo.delete_order.return_value = False
+
+    use_case = OrderUseCase(repository=mock_repo)
+
+    with pytest.raises(
+        ValueError, match="No se pudo eliminar, orden con ID 40 no encontrada"
+    ):
+        use_case.delete_order(40)

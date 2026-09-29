@@ -70,18 +70,17 @@ de la URL del repositorio, el cual puedes encontrar en la sección de Code.
     - Revisa que el .env (renombrado anteriormente), se encuentre en la raíz del proyecto.
     - Construye y levanta el contenedor en segundo plano usando el comando:
     **docker-compose up -d --build**
-    - Revisa en el programa de Docker Desktop que el contenedor este corriendo correctamente
-    el contenedor ubica el nombre **cap-python-proyecto-integrador** despliega
-    y veras el nombre **proyecto-orders-api**
+    - Revisa en el programa de Docker Desktop que el contenedor este corriendo correctamente,
+    ubica el nombre **cap-python-proyecto-integrador** despliega veras el nombre **proyecto-orders-api**
     - La API estará disponible en: http://localhost:8000/docs
-    - Para ver los logs puedes usar le programa Docker Desktop dando click
+    - Para ver los logs puedes usar el programa Docker Desktop dando click
     en los 3 botones ubicados en la parte derecha del nombre **proyecto-orders-api** ,
-    o bien, usar el comando: **docker-compose logs -f** para salir de los logs usa Ctrl+C.
+    o bien, usar el comando: **docker-compose logs -f** , para salir de los logs usa Ctrl+C.
     - Para apagar el proyecto usar **docker-compose stop** o bien borrar **docker-compose down**
 
 ## Prueba la API
 1. La API estará disponible en http://localhost:8000/docs
-2. Para iteractuar debes autenticarte:
+2. Para iteractuar debes autenticarte (puedes probar no autenticarte y ver la reaccion de la API):
     **Username** : admin
     **Password** : secreto
 3. Una vez autenticado puedes probar la API usando estos ejemplos:

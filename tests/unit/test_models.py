@@ -24,3 +24,14 @@ def test_order_creation_fails_with_invalid_email() -> None:
     item = OrderItem("Cable", 10.0, 1)
     with pytest.raises(ValueError, match="Email inválido"):
         Order(customer_email="correo_invalido", items=[item])
+
+
+def test_order_mark_as_paid() -> None:
+    item = OrderItem(product_name="Mousepad", price=50.0, quantity=3)
+    order = Order(customer_email="test@example.com", items=[item])
+
+    assert order.status == "PENDIENTE"
+
+    order.mark_as_paid()
+
+    assert order.status == "PAGADO"

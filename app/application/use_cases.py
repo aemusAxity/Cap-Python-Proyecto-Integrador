@@ -34,3 +34,22 @@ class OrderUseCase:
 
     def list_orders(self) -> List[Order]:
         return self.repository.get_all_orders()
+
+    def update_order_status(self, order_id: int, new_status: str) -> Order:
+        valid_statuses = ["PENDIENTE", "PAGADO", "ENVIADO", "CANCELADO"]
+        if new_status not in valid_statuses:
+            raise ValueError(f"Estado '{new_status}' no es válido")
+
+        updated_order = self.repository.update_order_status(order_id, new_status)
+
+        if updated_order is None:
+            raise ValueError(f"Orden con ID {order_id} no encontrada para actualizar")
+
+        return updated_order
+
+    def delete_order(self, order_id: int) -> None:
+        success = self.repository.delete_order(order_id)
+        if not success:
+            raise ValueError(
+                f"No se pudo eliminar, orden con ID {order_id} no encontrada."
+            )

@@ -81,9 +81,11 @@ de la URL del repositorio, el cual puedes encontrar en la sección de Code.
 ## Prueba la API
 1. La API estará disponible en http://localhost:8000/docs
 2. Para iteractuar debes autenticarte (puedes probar no autenticarte y ver la reaccion de la API):
+   ```text
     **Username** : admin
     **Password** : secreto
-3. Una vez autenticado puedes probar la API usando estos ejemplos:
+   ```
+4. Una vez autenticado puedes probar la API usando estos ejemplos:
     - Crea una orden de manera correcta cumpliendo todas las reglas de negocio.
     ```text
     {

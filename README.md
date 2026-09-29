@@ -11,17 +11,17 @@ Se aísla la lógica de negocio del framework web y la base de datos, garantizan
 
 ```mermaid
 graph TD
-    subgraph Capa de Infraestructura (Adaptadores)
+    subgraph infra [Capa de Infraestructura]
         A[FastAPI / Controladores Web]
         D[SQLAlchemy / SQLite]
     end
 
-    subgraph Capa de Aplicación (Casos de Uso y Puertos)
+    subgraph app [Capa de Aplicación]
         B(OrderUseCase)
         C((OrderRepository Interface))
     end
 
-    subgraph Capa de Dominio (Entidades)
+    subgraph dom [Capa de Dominio]
         E{Order & OrderItem}
     end
 
@@ -33,6 +33,7 @@ graph TD
 ```
 
 ## Estructura del proyecto
+```text
 .
 ├── alembic/                # Scripts de migración de base de datos
 ├── app/
@@ -48,6 +49,7 @@ graph TD
 ├── Dockerfile              # Construcción Multistage y Endurecida (Hardened)
 ├── docker-compose.yml      # Orquestación de contenedores
 └── pyproject.toml          # Gestión de dependencias y configuración de Linters
+```
 
 ## Calidad de Código y Seguridad (CI/CD)
 El repositorio tiene un pipeline automatizado en GitHub Actions que valida:
@@ -84,6 +86,7 @@ de la URL del repositorio, el cual puedes encontrar en la sección de Code.
     **Password** : secreto
 3. Una vez autenticado puedes probar la API usando estos ejemplos:
     - Crea una orden de manera correcta cumpliendo todas las reglas de negocio.
+    ```text
     {
         "customer_email": "cliente@empresa.com",
         "items": [
@@ -99,14 +102,17 @@ de la URL del repositorio, el cual puedes encontrar en la sección de Code.
             }
         ]
     }
-
+    ```
     - Crea una orden con una lista de artículos vacía.
+    ```text
     {
         "customer_email": "test@example.com",
         "items": []
     }
+    ```
 
     - Crea una orden con un email inválido
+    ```text
     {
         "customer_email": "correo_sin_formato",
         "items": [
@@ -117,12 +123,15 @@ de la URL del repositorio, el cual puedes encontrar en la sección de Code.
             }
         ]
     }
+    ```
 
     - Para probar **PATCH /orders/{order_id}/status** solo basta con poner la ID
-    del pedido que deseas actualizar (PAGADO, ENVIADO, CANCELADO)
+    del pedido que deseas actualizar (PAGADO, ENVIADO, CANCELADO).
+    ```text
     {
         "status": "PAGADO"
     }
+    ```
 
     Puedes probar con un tipo de status inválido para ver como reacciona la API
     al igual que poner un ID que no existe

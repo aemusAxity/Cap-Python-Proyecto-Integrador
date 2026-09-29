@@ -33,5 +33,5 @@ jobs:
       - name: Pruebas Unitarias, de Contrato y Cobertura (Pytest)
         run: pytest -v --cov=app tests/unit tests/contract
 
-      - name: Pruebas de Integración (E2E)
+      # - name: Pruebas de Integración (E2E)
         #run: pytest -v tests/e2e

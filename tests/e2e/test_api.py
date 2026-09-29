@@ -3,7 +3,7 @@ from typing import Dict, Generator
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.infrastructure.database import Base
@@ -31,6 +31,15 @@ def override_get_db() -> Generator:
 app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
+
+
+def test_get_db_yields_and_closes_session() -> None:
+    generador = get_db()
+    sesion = next(generador)
+
+    assert isinstance(sesion, Session)
+
+    generador.close()
 
 
 @pytest.fixture(autouse=True)
@@ -90,15 +99,39 @@ def test_create_order_success(auth_headers: Dict[str, str]) -> None:
     assert datos["id"] is not None
 
 
+def test_create_order_fails_with_400_bad_request(auth_headers: Dict[str, str]) -> None:
+    payload = {"customer_email": "test@email.com", "items": []}
+    respuesta = client.post("/orders/", json=payload, headers=auth_headers)
+
+    assert respuesta.status_code == 400
+    assert "Una orden debe tener al menos un item" in respuesta.json()["detail"]
+
+
+def test_create_order_fails_with_422_invalid_email(
+    auth_headers: Dict[str, str],
+) -> None:
+    payload = {
+        "customer_email": "test.com",
+        "items": [{"product_name": "Monitor", "price": 300.0, "quantity": 1}],
+    }
+    respuesta = client.post("/orders/", json=payload, headers=auth_headers)
+
+    # Pydantic devuelve 422
+    assert respuesta.status_code == 422
+
+    # Pydantic indique específicamente que el fallo fue en 'customer_email'
+    detalles_error = respuesta.json()["detail"]
+    assert detalles_error[0]["loc"][-1] == "customer_email"
+    assert "value is not a valid email address" in detalles_error[0]["msg"]
+
+
 def test_list_all_orders(auth_headers: Dict[str, str]) -> None:
-    # 1. Crear una orden primero
     datos_entrada = {
         "customer_email": "test@example.com",
         "items": [{"product_name": "Mouse", "price": 50.0, "quantity": 1}],
     }
     client.post("/orders/", json=datos_entrada, headers=auth_headers)
 
-    # 2. Consultar lista
     respuesta = client.get("/orders/", headers=auth_headers)
 
     assert respuesta.status_code == 200
@@ -108,7 +141,6 @@ def test_list_all_orders(auth_headers: Dict[str, str]) -> None:
 
 
 def test_get_order_by_id_success(auth_headers: Dict[str, str]) -> None:
-    # Crear
     datos_entrada = {
         "customer_email": "findme@test.com",
         "items": [{"product_name": "Cable", "price": 10.0, "quantity": 1}],
@@ -118,7 +150,6 @@ def test_get_order_by_id_success(auth_headers: Dict[str, str]) -> None:
     )
     id_orden = respuesta_creacion.json()["id"]
 
-    # Consultar por ID
     respuesta = client.get(f"/orders/{id_orden}", headers=auth_headers)
 
     assert respuesta.status_code == 200
@@ -132,9 +163,8 @@ def test_get_order_by_id_fails_not_found(auth_headers: Dict[str, str]) -> None:
 
 
 def test_update_order_status_success(auth_headers: Dict[str, str]) -> None:
-    # Crear
     datos_entrada = {
-        "customer_email": "update@test.com",
+        "customer_email": "test@example.com",
         "items": [{"product_name": "Desk", "price": 100.0, "quantity": 1}],
     }
     respuesta_creacion = client.post(
@@ -142,7 +172,6 @@ def test_update_order_status_success(auth_headers: Dict[str, str]) -> None:
     )
     id_orden = respuesta_creacion.json()["id"]
 
-    # Actualizar
     datos_actualizacion = {"status": "PAGADO"}
     respuesta = client.patch(
         f"/orders/{id_orden}/status", json=datos_actualizacion, headers=auth_headers
@@ -163,7 +192,6 @@ def test_update_order_status_fails_not_found(auth_headers: Dict[str, str]) -> No
 
 
 def test_update_order_status_fails_invalid_status(auth_headers: Dict[str, str]) -> None:
-    # Crear
     datos_entrada = {
         "customer_email": "badstatus@test.com",
         "items": [{"product_name": "A", "price": 1.0, "quantity": 1}],
@@ -173,7 +201,6 @@ def test_update_order_status_fails_invalid_status(auth_headers: Dict[str, str]) 
     )
     id_orden = respuesta_creacion.json()["id"]
 
-    # Actualizar con estado erróneo
     datos_actualizacion = {"status": "ESTADO_HACKEADO"}
     respuesta = client.patch(
         f"/orders/{id_orden}/status", json=datos_actualizacion, headers=auth_headers
@@ -184,7 +211,6 @@ def test_update_order_status_fails_invalid_status(auth_headers: Dict[str, str]) 
 
 
 def test_delete_order_success(auth_headers: Dict[str, str]) -> None:
-    # Crear
     datos_entrada = {
         "customer_email": "delete@test.com",
         "items": [{"product_name": "B", "price": 1.0, "quantity": 1}],
@@ -194,12 +220,10 @@ def test_delete_order_success(auth_headers: Dict[str, str]) -> None:
     )
     id_orden = respuesta_creacion.json()["id"]
 
-    # Eliminar
     respuesta_borrado = client.delete(f"/orders/{id_orden}", headers=auth_headers)
 
     assert respuesta_borrado.status_code == 204
 
-    # Verificar que ya no existe
     respuesta_consulta = client.get(f"/orders/{id_orden}", headers=auth_headers)
     assert respuesta_consulta.status_code == 404
 

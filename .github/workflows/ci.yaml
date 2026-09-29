@@ -4,13 +4,14 @@ on:
   push:
     branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main"]
+    branches: [ "main" ]
 
 jobs:
-  qa_and_security:
+  ci-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -21,6 +22,12 @@ jobs:
           poetry config virtualenvs.create false
           poetry install
 
+      - name: Archivo .env temporal pruebas
+        run: |
+          echo "DATABASE_URL=sqlite:///./orders_test.db" > .env
+          echo "JWT_SECRET_KEY=llave_falsa_super_larga_para_github_actions_32_chars" >> .env
+          echo "JWT_ALGORITHM=HS256" >> .env
+
       - name: Auditoría de Seguridad (Dependencias)
         run: pip-audit
 
@@ -30,8 +37,20 @@ jobs:
       - name: Análisis de Tipos Estáticos (Mypy)
         run: mypy app/
 
+      - name: Prueba Migraciones de DB (Alembic)
+        run: poetry run alembic upgrade head
+
       - name: Pruebas Unitarias, de Contrato y Cobertura (Pytest)
         run: pytest -v --cov=app tests/unit tests/contract
 
       - name: Pruebas de Integración (E2E)
         run: pytest -v tests/e2e
+
+  cd-pipeline:
+    needs: ci-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir Imagen Docker Multistage
+        run: docker build -t orders-service-api:latest .
